@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes');
 const patientRoutes = require('./routes/patientRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const consultationRoutes = require('./routes/consultationRoutes');
+const referralRoutes = require('./routes/referralRoutes');
 const Consultation = require('./models/Consultation');
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/consultations', consultationRoutes);
+app.use('/api/referrals', referralRoutes);
 
 // Test route
 app.get('/', (req, res) => {
