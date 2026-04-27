@@ -4,7 +4,8 @@ const Appointment = require('../models/Appointment');
 // ── Start Consultation (healthworker) ─────────────────
 exports.startConsultation = async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.appointmentId);
+    const appointment = await Appointment.findById(req.params.appointmentId)
+      .populate('patient');
 
     if (!appointment) {
       return res.status(404).json({ message: 'Appointment not found' });
@@ -23,7 +24,7 @@ exports.startConsultation = async (req, res) => {
 
     const consultation = await Consultation.create({
       appointment: appointment._id,
-      patient: appointment.patient,
+      patient: appointment.patient.user,  // ← get the User ID from Patient
       healthWorker: appointment.healthWorker,
       status: 'active',
       startedAt: new Date()
