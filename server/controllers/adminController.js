@@ -3,6 +3,7 @@ const Patient = require('../models/Patient');
 const Appointment = require('../models/Appointment');
 const Consultation = require('../models/Consultation');
 const Referral = require('../models/Referral');
+const NHIS = require('../models/NHIS');
 
 // ── Get Dashboard Stats ───────────────────────────────
 exports.getDashboardStats = async (req, res) => {
@@ -17,6 +18,8 @@ exports.getDashboardStats = async (req, res) => {
     const activeConsultations = await Consultation.countDocuments({ status: 'active' });
     const totalReferrals = await Referral.countDocuments();
     const urgentReferrals = await Referral.countDocuments({ urgency: 'emergency' });
+    const totalNHIS = await NHIS.countDocuments();
+    const activeNHIS = await NHIS.countDocuments({ status: 'active' });
 
     res.status(200).json({
       stats: {
@@ -37,6 +40,10 @@ exports.getDashboardStats = async (req, res) => {
         referrals: {
           total: totalReferrals,
           emergency: urgentReferrals
+        },
+        nhis: {
+          total: totalNHIS,
+          active: activeNHIS
         }
       }
     });
@@ -148,40 +155,14 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
-// ── NHIS Simulation ───────────────────────────────────
+// ── Verify NHIS ID (real database) ───────────────────
 exports.verifyNHIS = async (req, res) => {
   try {
     const { nhisId } = req.body;
 
-    // Simulated NHIS database entries
-    const mockNHISDatabase = [
-      {
-        nhisId: 'NHIS-001-2024',
-        fullName: 'Adaeze Okonkwo',
-        plan: 'Basic',
-        status: 'active',
-        expiryDate: '2025-12-31',
-        coverageDetails: 'Outpatient, Inpatient, Maternity'
-      },
-      {
-        nhisId: 'NHIS-002-2024',
-        fullName: 'Emeka Chukwu',
-        plan: 'Standard',
-        status: 'active',
-        expiryDate: '2025-06-30',
-        coverageDetails: 'Outpatient, Inpatient, Surgery'
-      },
-      {
-        nhisId: 'NHIS-003-2024',
-        fullName: 'Fatima Abdullahi',
-        plan: 'Premium',
-        status: 'expired',
-        expiryDate: '2024-01-01',
-        coverageDetails: 'Full Coverage'
-      }
-    ];
-
-    const record = mockNHISDatabase.find(r => r.nhisId === nhisId);
+    const record = await NHIS.findOne({ nhisId })
+      .populate('patient')
+      .populate('user', 'fullName email phone');
 
     if (!record) {
       return res.status(404).json({
@@ -193,7 +174,34 @@ exports.verifyNHIS = async (req, res) => {
     res.status(200).json({
       message: 'NHIS record found',
       verified: true,
-      data: record
+      data: {
+        nhisId: record.nhisId,
+        fullName: record.fullName,
+        plan: record.plan,
+        status: record.status,
+        expiryDate: record.expiryDate,
+        coverageDetails: record.coverageDetails,
+        patient: record.patient,
+        contact: record.user
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// ── Get All NHIS Records ──────────────────────────────
+exports.getAllNHISRecords = async (req, res) => {
+  try {
+    const records = await NHIS.find()
+      .populate('patient')
+      .populate('user', 'fullName email phone')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      count: records.length,
+      records
     });
 
   } catch (error) {

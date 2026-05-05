@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getDashboardStats,
+    getDashboardStats,
   getAllUsers,
   getUserById,
   toggleUserStatus,
   updateUserRole,
   deleteUser,
   verifyNHIS,
-  getRecentActivity
+  getRecentActivity,
+  getAllNHISRecords
 } = require('../controllers/adminController');
 
 const { protect, authorise } = require('../middleware/authMiddleware');
@@ -24,5 +25,6 @@ router.put('/users/:id/role', updateUserRole);
 router.delete('/users/:id', deleteUser);
 router.post('/nhis/verify', verifyNHIS);
 router.get('/activity', getRecentActivity);
+router.get('/nhis', protect, authorise('admin'), getAllNHISRecords);
 
 module.exports = router;
